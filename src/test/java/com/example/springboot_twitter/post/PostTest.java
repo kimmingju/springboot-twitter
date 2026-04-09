@@ -3,6 +3,7 @@ package com.example.springboot_twitter.post;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class PostTest {
 
@@ -12,5 +13,15 @@ class PostTest {
         post.increaseCommentCount();
 
         assertEquals(1,post.getCommentCount());
+    }
+    @Test
+    void decreaseCommentCount() {
+        Post post = Post.builder()
+                .commentCount(1)
+                .build();
+
+        post.decreaseCommentCount();
+
+        assertThat(post.getCommentCount()).isEqualTo(0);
     }
 }
