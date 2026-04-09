@@ -43,4 +43,4 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/springboot-twitter-linux:latest
           cache-from: type=gha
-        cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=max
