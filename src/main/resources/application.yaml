@@ -1,5 +1,13 @@
 spring:
   datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
     url: jdbc:mysql://localhost:3307/twitterdb
     username: dev
     password: dev123
@@ -11,3 +19,13 @@ spring:
 logging:
   level:
     org.hibernate.orm.jdbc.bind: trace
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
