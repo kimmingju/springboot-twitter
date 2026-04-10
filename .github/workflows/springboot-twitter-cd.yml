@@ -46,27 +46,31 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  deploy:
-    needs: springboot-twitter-cd
-    runs-on: ubuntu-24.04
+    deploy:
+      needs: springboot-twitter-cd
+      runs-on: ubuntu-24.04
+      permissions:
+        id-token: write
+        contents: read
 
-    steps:
-      - name: Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          script: |
-            sudo docker stop springboot-twitter || true
-            sudo docker rm springboot-twitter || true
+      steps:
+        - name: Configure AWS credentials via OIDC
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            role-to-assume: ${{ secrets.AWS_GITHUB_OIDC_ROLE_ARN }}
+            aws-region: ${{ secrets.AWS_REGION }}
 
-            sudo docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/springboot-twitter-linux:latest
-
-            sudo docker run -d \
-              --name springboot-twitter \
-              -p 8080:8080 \
-              -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ secrets.RDS_ENDPOINT }}:3306/twitterdb \
-              -e SPRING_DATASOURCE_USERNAME=${{ secrets.RDS_USERNAME }} \
-              -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} \
-              ${{ secrets.DOCKER_HUB_USERNAME }}/springboot-twitter-linux:latest
+        - name: Deploy to EC2 via SSM
+          run: |
+            aws ssm send-command \
+              --document-name "AWS-RunShellScript" \
+              --comment "Deploy springboot-twitter via SSM" \
+              --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
+              --parameters 'commands=[
+                "docker stop springboot-twitter || true",
+                "docker rm springboot-twitter || true",
+                "docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/springboot-twitter-linux:latest",
+                "docker run -d --name springboot-twitter -p 8080:8080 -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ secrets.RDS_ENDPOINT }}:3306/twitterdb -e SPRING_DATASOURCE_USERNAME=${{ secrets.RDS_USERNAME }} -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} ${{ secrets.DOCKER_HUB_USERNAME }}/springboot-twitter-linux:latest"
+              ]' \
+              --region "${{ secrets.AWS_REGION }}" \
+              --output text
