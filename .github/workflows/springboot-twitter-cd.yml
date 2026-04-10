@@ -58,12 +58,12 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            docker stop springboot-twitter || true
-            docker rm springboot-twitter || true
+            sudo docker stop springboot-twitter || true
+            sudo docker rm springboot-twitter || true
 
-            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/springboot-twitter-linux:latest
+            sudo docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/springboot-twitter-linux:latest
 
-            docker run -d \
+            sudo docker run -d \
               --name springboot-twitter \
               -p 8080:8080 \
               -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ secrets.RDS_ENDPOINT }}:3306/twitterdb \
